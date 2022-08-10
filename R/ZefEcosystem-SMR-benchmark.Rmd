@@ -1,0 +1,200 @@
+---
+title: "ZefEcosystem SMR re-creation"
+author: Anton Antonov
+date: 2022-08-10
+output: html_notebook
+params:
+  smrDirName: "../Data"
+  smrZipFileName: "ZefEcosystem-dfSMRMatrix.csv.gz"
+  smrPrefix: "ZefEcosystem"
+  exportDirName: "./"
+  exportDataFrameQ: TRUE
+  exportSMRPrefix: "ZefEcosystem"
+  exportFormat: "CSVHarwellBoeing"
+  saveSMRObjectQ: TRUE
+  removeTagsWithCommasQ: TRUE
+  nTimes: 100
+---
+
+```{r setup}
+library(Matrix)
+library(tidyverse)
+library(readr)
+library(skimr)
+
+library(SparseMatrixRecommender)
+library(SMRMon)
+library(LSAMon)
+library(ParetoPrincipleAdherence)
+
+library(TTRCreation)
+
+exportSMRPrefix <- params$exportSMRPrefix
+if ( is.null(exportSMRPrefix) ) {
+  exportSMRPrefix <- params$smrPrefix
+}
+```
+
+
+# Ingest SMR CSV file
+
+```{r}
+system.time(
+  dfSMRMatrix <- as.data.frame(readr::read_csv(file = file.path(params$smrDirName, params$smrZipFileName)))
+)
+```
+
+```{r}
+head(dfSMRMatrix)
+```
+
+-------
+
+# Make SMR object
+
+```{r}
+system.time(
+  smrObj <- SMRCreateFromLongForm( data = dfSMRMatrix, valueColumnName = "Tag")
+)
+```
+
+```{r}
+dim(smrObj$M)
+```
+
+```{r, rows.print=20}
+smrObj %>% SMRMonTakeTagTypeRanges
+```
+
+------
+
+# Example profiles
+
+```{r}
+smrObj %>% 
+  SMRMonProfile(history = "Data::Summarizers:ver<0.2.0>") %>% 
+  SMRMonTakeValue 
+```
+
+```{r, rows.print=30}
+smrObj %>% 
+  SMRMonProfile(history = "ML::Clustering:ver<0.1.2>") %>% 
+  SMRMonTakeValue %>% 
+  dplyr::filter(grepl("Tag", Tag))
+```
+
+------
+
+# Example recommendtions
+
+```{r}
+grep("lizmat", colnames(SMRSubMatrix(smrObj, "Author")), value = T)
+```
+
+```{r}
+dfRecs <- 
+  smrObj %>% 
+  SMRMonRecommendByProfile(c("Tag:java", "Word:action")) %>% 
+  SMRMonTakeValue
+dfRecs
+```
+
+```{r}
+res <- 
+  smrObj %>% 
+  SMRMonSummarizeItem( dfRecs$Item[[1]], nTopTags = 6 ) %>% 
+  SMRMonTakeValue
+res$TagsSummary
+```
+
+------
+
+# Profiling
+
+```{r}
+lsProf <- c("Tag:cli",
+            "Tag:model",
+            "Dependence:json::fast",
+            "Word:sql",
+            "Word:math")
+```
+
+```{r, message=FALSE}
+timingRes <- 
+  microbenchmark::microbenchmark(
+    {dfRecs <- 
+      smrObj %>% 
+      SMRMonRecommendByProfile(lsProf) %>% 
+      SMRMonTakeValue
+    },
+    times = params$nTimes, unit = "second")
+print(timingRes)
+```
+
+
+```{r, message=FALSE}
+timingRes <- 
+microbenchmark::microbenchmark(
+  {dfRecs <- 
+    smrObj %>% 
+    SMRMonRecommend(c("Data::Reshapers:ver<0.1.8>")) %>% 
+    SMRMonTakeValue
+  },
+  times = params$nTimes, unit = "second")
+print(timingRes)
+```
+
+```{r, message=FALSE}
+timingRes <- 
+microbenchmark::microbenchmark(
+  {dfRecs <- 
+    smrObj %>% 
+    SMRMonRetrieveByQueryElements( should = c("Tag:java", "Tag:cli"), must = c("Tag:parser")) %>% 
+    SMRMonTakeValue
+  },
+  times = params$nTimes, unit = "second")
+print(timingRes)
+```
+
+------
+
+# Export 
+
+
+```{r}
+if (params$exportDataFrameQ) {
+  
+  print(system.time(
+    dfSMRMatrix <- 
+      smrObj %>% 
+      SMRMonGetLongFormData( tagTypesQ = T, removeTagTypesFromTagsQ = F) %>% 
+      SMRMonTakeValue
+  ))
+  
+  print(system.time(
+    if( params$removeTagsWithCommasQ ) {
+      dfSMRMatrix <- 
+        dfSMRMatrix %>% 
+        dplyr::filter( !grepl(",", dfSMRMatrix$Tag) )
+    }
+  ))
+  
+
+  print(system.time(
+    write.csv( x = dfSMRMatrix, file = file.path(params$exportDirName, paste0(exportSMRPrefix, "-dfSMRMatrix.csv")), row.names = F)
+  ))
+  
+  print(system.time(
+    smrObj %>% SMRExportToDirectory( directoryPath = params$exportDirName, dataNamePrefix = exportSMRPrefix, format = params$exportFormat)
+  ))
+}
+```
+
+```{r}
+if( params$saveSMRObjectQ ) {
+  system.time(
+    save( smrObj, file = file.path(params$exportDirName, paste0("smrObj-", params$smrPrefix, ".RData")))
+  )
+}
+```
+
