@@ -32,21 +32,21 @@ discussed in this repository:
 
 ### Data
 
-| Data        | Files prefix |
-|-------------|--------------|
-| Mid-size    | ZefEcosystem |
+| Data       | Files prefix |
+|------------|--------------|
+| Small-size | ZefEcosystem |
 
 ### Files
 
-| Programming language | Mid-size data benchmark file | Large data benchmark file | 
-|----------------------|------------------------------|---------------------------|
-| Java                 |                              |                           |
-| Mathematica / WL     |                              |                           |
-| Python               |                              |                           |
-| R                    |                              |                           |
-| Raku                 |                              |                           |
-| SQLite               |                              |                           |
-| Swift                |                              |                           |
+| Programming language | Mid-size data benchmark file                                            | Large data benchmark file | 
+|----------------------|-------------------------------------------------------------------------|---------------------------|
+| Java                 |                                                                         |                           |
+| Mathematica / WL     |                                                                         |                           |
+| Python               | [ZefEcosystem-SMR-benchmark.py](./Python/ZefEcosystem-SMR-benchmark.py) |                           |
+| R                    | [ZefEcosystem-SMR-benchmark.Rmd](./R/ZefEcosystem-SMR-benchmark.Rmd)    |                           |
+| Raku                 |                                                                         |                           |
+| SQLite               |                                                                         |                           |
+| Swift                |                                                                         |                           |
 
 ### Reports
 
