@@ -38,7 +38,29 @@ doc <-
 ## docopt parsing
 opt <- docopt(doc)
 
-print(docopt(doc))
+#print(docopt(doc))
+
+## ----pipeline--------------------------------------------------------------------
+# File Read ##
+
+OpenRead <- function(arg) {
+  if (arg %in% c("-", "/dev/stdin")) {
+    file("stdin", open = "r")
+  } else if (grepl("^/dev/fd/", arg)) {
+    fifo(arg, open = "r")
+  } else {
+    file(arg, open = "r")
+  }
+}
+
+if ( opt$pipe ) {
+
+  con <- OpenRead("-")
+  pipeArgs <- read.table(con, sep = " ", header = FALSE)
+  opt <- docopt(doc, args = as.character(pipeArgs))
+}
+
+## ----pre-process--------------------------------------------------------------------
 
 if (opt$dir == "NA" ||
   opt$dir == "NULL" ||
@@ -96,7 +118,7 @@ load(file = fileName)
 
 ## ----recommendations--------------------------------------------------------------------
 
-if (nchar(params$must) > 0 || nchar(params$mustNot) > 0) {
+if ( is.character(params$must) && nchar(params$must) > 0 || is.character(params$mustNot) && nchar(params$mustNot) > 0) {
 
   shouldLocal = if ( is.character(params$profile) && nchar(params$profile) ) { trimws(strsplit(x = params$profile, split = ";")[[1]]) } else { NULL }
   mustLocal = if ( is.character(params$must) && nchar(params$must) ) { trimws(strsplit(x = params$must, split = ";")[[1]]) } else { NULL }
@@ -119,7 +141,9 @@ if (nchar(params$must) > 0 || nchar(params$mustNot) > 0) {
                                   mustNotType = 'union' ) %>%
     SMRMonTakeValue
 
-} else if (nchar(params$profile) > 0) {
+  if(nrow(recs) > 0) { rownames(recs) <- NULL }
+
+} else if ( is.character(params$profile) && nchar(params$profile) > 0) {
 
   profileLocal = trimws(strsplit(x = params$profile, split = ";")[[1]])
 
@@ -128,6 +152,14 @@ if (nchar(params$must) > 0 || nchar(params$mustNot) > 0) {
     SMRMonRecommendByProfile(profileLocal, nrecs = params$nrecs, ignoreUnknownTags = T, normalize = T) %>%
     SMRMonTakeValue
 
+  if(nrow(recs) > 0) {
+    rownames(recs) <- NULL
+    recs <- recs[, -2]
+  }
+
+} else {
+  print("Do not know what to do without profile or text arguments.")
+  recs = NULL
 }
 
 ## ----result--------------------------------------------------------------------
