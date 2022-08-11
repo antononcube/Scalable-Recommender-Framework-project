@@ -32,6 +32,8 @@ shortcuts run "Photo Text Extractor" -o ~/Desktop/Extracted-CLI.md && ./invoke-s
 
 ### Recommend with image text extraction (*WLS*)
 
+In directory "Python":
+
 ```shell
-./extract-text-from-image.wls ~/Desktop/Raku.Land-Dan-page.png | tr '\n' ' ' | sed 's/^/ --nrecs 20 --smr ZefEcosystem /' | ./invoke-smr.py --pipe
+../Mathematica/extract-text-from-image.wls  ~/Desktop/Why-Dan-from-p6steve.png | tr '\n' ' ' | sed 's/^/ --nrecs 20 --smr ZefEcosystem /' | ./invoke-smr.py --pipe
 ```
