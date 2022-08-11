@@ -17,9 +17,9 @@ doc <-
   'Usage:
     invoke-smr.R -h|--help
     invoke-smr.R -v|--version
-    invoke-smr.R [-f|--file=FILE] [--profile=PROF] [--nrecs=NRECS] [--smr=SMRID] [--type=TYPE]
+    invoke-smr.R [-f|--file=FILE] [--profile=PROF] [--must=MUST] [--mustnot=MUSTNOT] [--nrecs=NRECS] [--smr=SMRID] [--type=TYPE]
     invoke-smr.R --pipe
-    invoke-smr.R <text>... [--profile=PROF] [--nrecs=NRECS] [--smr=SMRID] [--type=TYPE]
+    invoke-smr.R <text>... [--profile=PROF] [--must=MUST] [--mustnot=MUSTNOT] [--nrecs=NRECS] [--smr=SMRID] [--type=TYPE]
 
   Options:
     -v --version              Show version
@@ -27,6 +27,8 @@ doc <-
     -e --error                Throw error and halt instead of a warning [default: FALSE]
     -d --dir DIR              Directory (folder) with SMR objects [default: NULL].
     -p --profile=PROF         Profile tags [default : ""]
+    --must=MUST               Must profile tags [default : ""]
+    --mustnot=MUSTNOT         Must not profile tags [default : ""]
     -s --smr=SMRID            SMR identifier [default: NULL]
     -t --type=TYPE            Type of the output, one of "CSV", "DF", "JSON". [default: DF]
     -n --nrecs=NRECS          Number of recommendations. [default: 12]
@@ -36,7 +38,7 @@ doc <-
 ## docopt parsing
 opt <- docopt(doc)
 
-#print(opt)
+print(docopt(doc))
 
 if (opt$dir == "NA" ||
   opt$dir == "NULL" ||
@@ -73,6 +75,8 @@ params <- list(dir = opt$dir,
                smrID = opt$smr,
                nrecs = opt$nrecs,
                profile = opt$profile,
+               must = opt$must,
+               mustNot = opt$mustnot,
                type = opt$type)
 
 ## ----setup--------------------------------------------------------------------
@@ -92,11 +96,35 @@ load(file = fileName)
 
 ## ----recommendations--------------------------------------------------------------------
 
-if (nchar(params$profile) > 0) {
+if (nchar(params$must) > 0 || nchar(params$mustNot) > 0) {
 
-  profileLocal = strsplit(x = params$profile, split = " ")[[1]]
+  shouldLocal = if ( is.character(params$profile) && nchar(params$profile) ) { trimws(strsplit(x = params$profile, split = ";")[[1]]) } else { NULL }
+  mustLocal = if ( is.character(params$must) && nchar(params$must) ) { trimws(strsplit(x = params$must, split = ";")[[1]]) } else { NULL }
+  mustNotLocal = if ( is.character(params$mustNot) && nchar(params$mustNot) ) { trimws(strsplit(x = params$mustNot, split = ";")[[1]]) } else { NULL }
 
-  recs <- smrObj %>%
+  shouldLocal = intersect(shouldLocal, colnames(smrObj$M))
+  mustLocal = intersect(mustLocal, colnames(smrObj$M))
+  mustNotLocal = intersect(mustNotLocal, colnames(smrObj$M))
+
+  if ( length(shouldLocal) == 0 ) { shouldLocal = NULL }
+  if ( length(mustLocal) == 0 ) { mustLocal = NULL }
+  if ( length(mustNotLocal) == 0 ) { mustNotLocal = NULL }
+
+  recs <-
+    smrObj %>%
+    SMRMonRetrieveByQueryElements(should = shouldLocal,
+                                  must = mustLocal,
+                                  mustNot = mustNotLocal,
+                                  mustType = 'intersection',
+                                  mustNotType = 'union' ) %>%
+    SMRMonTakeValue
+
+} else if (nchar(params$profile) > 0) {
+
+  profileLocal = trimws(strsplit(x = params$profile, split = ";")[[1]])
+
+  recs <-
+    smrObj %>%
     SMRMonRecommendByProfile(profileLocal, nrecs = params$nrecs, ignoreUnknownTags = T, normalize = T) %>%
     SMRMonTakeValue
 
