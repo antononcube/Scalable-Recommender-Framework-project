@@ -40,7 +40,7 @@ def recommend(profileArg: str, textArg: str, smr_id: str, nrecsArg: int = 12):
     if len(profileArg) == 0:
         profileLocal = []
     else:
-        profileLocal = profileArg.split(" ")
+        profileLocal = [x.strip() for x in profileArg.split(";")]
 
     recs = (smrEndowed
             .recommend_by_profile_and_text(profile=profileLocal,
