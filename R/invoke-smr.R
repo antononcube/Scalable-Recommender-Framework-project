@@ -42,6 +42,7 @@ opt <- docopt(doc)
 
 ## ----pipeline--------------------------------------------------------------------
 # File Read ##
+# See : https://stackoverflow.com/a/26153325/14163984
 
 OpenRead <- function(arg) {
   if (arg %in% c("-", "/dev/stdin")) {
