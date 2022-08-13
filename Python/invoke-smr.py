@@ -4,7 +4,7 @@
 Usage:
     invoke-smr.py -h|--help
     invoke-smr.py -v|--version
-    invoke-smr.py [-f|--file=FILE] [--profile=PROF] [--nrecs=NRECS] [--smr=SMRID] [--type=TYPE]
+    invoke-smr.py [-f|--file=FILE] [--profile=PROF] [--must=MUST] [--mustnot=MUSTNOT] [--nrecs=NRECS] [--smr=SMRID] [--type=TYPE]
     invoke-smr.py --pipe
     invoke-smr.py <text>... [--profile=PROF] [--nrecs=NRECS] [--smr=SMRID] [--type=TYPE]
 
@@ -12,6 +12,8 @@ Options:
     -h --help                 Show this screen.
     -v --version              Show version.
     -p --profile=PROF         Profile tags[default : ""]
+    --must=MUST               Must profile tags [default : ""]
+    --mustnot=MUSTNOT         Must not profile tags [default : ""]
     -s --smr=SMRID            SMR identifier
     -t --type=TYPE            Type of the output, one of 'CSV', 'DF', 'JSON'. [default: DF]
     -n --nrecs=NRECS          Number of recommendations. [default: 12]
@@ -21,6 +23,7 @@ Options:
 
 from docopt import docopt
 import sys
+import ast
 import pandas
 import getpass
 
@@ -53,6 +56,36 @@ def recommend(profileArg: str, textArg: str, smr_id: str, nrecsArg: int = 12):
     return recs
 
 
+def retrieve(profileArg: str, mustArg: str, mustNotArg: str, smr_id: str):
+    with open('smrObj-' + smr_id + '.pickle', 'rb') as handle:
+        smrObj = pickle.load(handle)
+
+    if len(profileArg) == 0:
+        profileLocal = []
+    else:
+        profileLocal = [x.strip() for x in ast.literal_eval(profileArg).split(";")]
+
+    if len(mustArg) == 0:
+        mustLocal = []
+    else:
+        mustLocal = [x.strip() for x in ast.literal_eval(mustArg).split(";")]
+
+    if len(mustNotArg) == 0:
+        mustNotLocal = []
+    else:
+        mustNotLocal = [x.strip() for x in ast.literal_eval(mustNotArg).split(";")]
+
+    recs = (smrObj
+            .retrieve_by_query_elements(should=profileLocal,
+                                        must=mustLocal,
+                                        must_not=mustNotLocal,
+                                        ignore_unknown=True)
+            .take_value())
+
+    # The result
+    return recs
+
+
 __version__ = "Invoke-SMR-0.0.1"
 
 if __name__ == '__main__':
@@ -62,7 +95,7 @@ if __name__ == '__main__':
         pipe = sys.stdin.read()
         args = docopt(__doc__, pipe)
 
-    if args['--profile'] or args['<text>'] or args['--file']:
+    if args['--profile'] or args['--must'] or args['--mustnot'] or args['<text>'] or args['--file']:
         if args['--smr']:
             smrID = args['--smr']
         else:
@@ -72,6 +105,14 @@ if __name__ == '__main__':
         if args['--profile']:
             profile = args['--profile']
 
+        must = ""
+        if args['--must']:
+            must = args['--must']
+
+        mustNot = ""
+        if args['--mustnot']:
+            mustNot = args['--mustnot']
+
         text = ""
         if args['<text>']:
             text = args['<text>']
@@ -80,7 +121,10 @@ if __name__ == '__main__':
 
         nrecs = int(args['--nrecs'])
 
-        result = recommend(profile, text, smrID, nrecs)
+        if len(must) > 0 or len(mustNot) > 0:
+            result = retrieve(profile, must, mustNot, smrID)
+        else:
+            result = recommend(profile, text, smrID, nrecs)
 
         dfResult = pandas.DataFrame(result.items(), columns=['Item', 'Score'])
 
