@@ -75,6 +75,13 @@ discussed in this repository:
 (2015-2022),
 [GitHub/antononcube](https://github.com/antononcube).
 
+### Kotlin packages
+
+[AAr2] Anton Antonov,
+[Kotlin-StreamsBlendingRecommender](https://github.com/antononcube/Kotlin-StreamsBlendingRecommender),
+(2021),
+[GitHub/antononcube](https://github.com/antononcube).
+
 ### Mathematica packages
 
 [AAp1] Anton Antonov,
@@ -135,14 +142,14 @@ discussed in this repository:
 
 ### Raku packages
 
-[AAr2] Anton Antonov,
+[AAr3] Anton Antonov,
 [ML::StreamsBlendingRecommender Raku package](https://github.com/antononcube/Raku-ML-StreamsBlendingRecommender),
 (2021),
 [GitHub/antononcube](https://github.com/antononcube).
 
 ### Swift packages
 
-[AAr3] Anton Antonov,
+[AAr4] Anton Antonov,
 [Swift-StreamsBlendingRecommender](https://github.com/antononcube/Swift-StreamsBlendingRecommender),
 (2022),
 [GitHub/antononcube](https://github.com/antononcube).
