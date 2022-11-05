@@ -4,7 +4,7 @@
 Usage:
     invoke-smr.py -h|--help
     invoke-smr.py -v|--version
-    invoke-smr.py [-f|--file=FILE] [--profile=PROF] [--must=MUST] [--mustnot=MUSTNOT] [--nrecs=NRECS] [--smr=SMRID] [--type=TYPE]
+    invoke-smr.py [-f|--file=FILE] [--profile=PROF] [--must=MUST] [--must-not=MUSTNOT] [--nrecs=NRECS] [--smr=SMRID] [--type=TYPE]
     invoke-smr.py --pipe
     invoke-smr.py <text>... [--profile=PROF] [--nrecs=NRECS] [--smr=SMRID] [--type=TYPE]
 
@@ -13,7 +13,7 @@ Options:
     -v --version              Show version.
     -p --profile=PROF         Profile tags[default : ""]
     --must=MUST               Must profile tags [default : ""]
-    --mustnot=MUSTNOT         Must not profile tags [default : ""]
+    --must-not=MUSTNOT        Must not profile tags [default : ""]
     -s --smr=SMRID            SMR identifier
     -t --type=TYPE            Type of the output, one of 'CSV', 'DF', 'JSON'. [default: DF]
     -n --nrecs=NRECS          Number of recommendations. [default: 12]
@@ -110,7 +110,7 @@ if __name__ == '__main__':
             must = args['--must']
 
         mustNot = ""
-        if args['--mustnot']:
+        if args['--must-not']:
             mustNot = args['--mustnot']
 
         text = ""
